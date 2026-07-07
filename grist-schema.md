@@ -41,7 +41,7 @@ au lieu des départements. Les formes de chaque bâtiment ont été tracées à 
 > directement le nom de la catégorie quand vous cliquez une pastille de couleur.
 
 <details>
-<summary>Liste complète des 51 lignes (cliquer pour déplier)</summary>
+<summary>Liste complète des 56 lignes (cliquer pour déplier)</summary>
 
 | Site | Bâtiment |
 |------|----------|
@@ -96,8 +96,18 @@ au lieu des départements. Les formes de chaque bâtiment ont été tracées à 
 | Saint-Charles | Saint-Charles 1 |
 | Saint-Charles | Saint-Charles 2 |
 | Saint-Louis | Saint-Louis |
+| Route de Mende | Forage |
+| Route de Mende | Puits |
+| Route de Mende | Fontaine |
+| Route de Mende | Bassin K/M |
+| Route de Mende | Bassin L |
 
 </details>
+
+> Les 5 dernières lignes ci-dessus (`Forage`, `Puits`, `Fontaine`, `Bassin K/M`, `Bassin L`) sont
+> les **points d'eau** de cette variante (voir section "Points d'eau" plus bas) — ajoutez-les à
+> votre table `Batiments` exactement comme n'importe quel autre bâtiment (même `Site`, mêmes
+> colonnes `note`/`visible`) pour pouvoir les colorer et les gérer depuis la liste "Bâtiments".
 
 ### ⚠️ Points à vérifier avec vous
 
@@ -267,26 +277,35 @@ Répétez l'opération pour chacun des 5 sites (le calage est indépendant par s
 
 ## Points d'eau (forage, puits, fontaine, bassins)
 
-Cette variante ajoute une couche spécifique pour repérer les installations liées au réseau de
-forage, indépendante de la table `Batiments` — **pas de table Grist à créer pour ça**, tout est
-géré directement dans le widget :
+Cette variante ajoute 5 éléments pour repérer les installations liées au réseau de forage :
 
 - 3 points (cercles) : **Forage**, **Puits**, **Fontaine**.
 - 2 rectangles : les **bassins** devant les bâtiments **K/M** et **L**.
 
-Ces 5 éléments sont pré-positionnés sur le site **Route de Mende** à partir du plan de référence
-fourni, mais ce sont des **positions approximatives de départ** — affinez-les avec le bouton
-**💧 Points d'eau** en haut de la carte :
+**Ce sont des bâtiments comme les autres** : ils se colorent, se listent et se survolent (même
+étiquette au survol, même pastilles de catégorie) exactement comme `Bâtiment A`, `Bâtiment K`,
+etc. — la seule différence est que leur *forme* (cercle/rectangle) est définie dans le widget
+plutôt que tracée depuis le plan d'origine. Pour qu'un point d'eau soit coloré et apparaisse dans
+la liste "Bâtiments", il **doit avoir une ligne dans votre table Grist `Batiments`** avec le
+`Site` et le `Bâtiment` correspondants exactement (voir les 5 noms dans la liste complète
+ci-dessus). Sans cette ligne, le point reste visible sur la carte mais non coloré/non listé
+(comme un bâtiment sans ligne Grist).
+
+Leur **géométrie** (position, taille, rotation) est pré-remplie sur le site **Route de Mende** à
+partir du plan de référence fourni, mais ce sont des **positions approximatives de départ** —
+affinez-les avec le bouton **💧 Points d'eau** en haut de la carte :
 
 1. Cliquez **💧 Points d'eau** → chaque point/rectangle devient déplaçable.
 2. **Glissez** un élément sur la carte pour le repositionner précisément.
 3. Ajustez sa **taille** (cercle) ou sa **largeur/hauteur/rotation** (rectangle) avec les boutons
-   −/+ du panneau. Renommez-le via son champ texte, ou supprimez-le avec 🗑.
+   −/+ du panneau. Supprimez-le avec 🗑 si besoin.
 4. Ajoutez de nouveaux points/rectangles depuis le bas du panneau si besoin (autres forages,
-   citernes, etc.).
+   citernes, etc.) — pensez à ajouter la ligne correspondante dans la table `Batiments` avec le
+   même nom exact pour pouvoir le colorer.
 5. Cliquez **💾 Enregistrer** : comme le calage du plan, les positions sont mémorisées dans les
    options du widget et partagées avec tous les utilisateurs du document — aucune donnée n'est
    perdue en rechargeant la page ou en changeant de configuration Grist.
 
-Une case à cocher **💧 Points d'eau** apparaît dans la légende (en bas de la liste) pour
-masquer/afficher toute la couche sans rien supprimer.
+> Le champ texte de chaque point dans le panneau **💧 Points d'eau** modifie son nom (et donc la
+> ligne Grist à laquelle il correspond) — ne le renommez que si vous renommez aussi la ligne
+> `Batiments` associée, sous peine de perdre la coloration.

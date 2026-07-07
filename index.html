@@ -149,6 +149,7 @@
 
   .nc{font-size:11px;color:#888;padding:4px 0}
   .cumr{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px;color:#555}
+  #cumname{flex:1;min-width:0;font-size:11px;border:1px solid #ccc;border-radius:3px;padding:3px 6px;color:#222;background:#fff}
   .cumv{width:20px;height:20px;border-radius:3px;border:1px solid #ccc;cursor:pointer;position:relative;overflow:hidden;flex-shrink:0}
   .cumv input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer}
 
@@ -279,7 +280,7 @@
       </div>
       <div id="wf-bar">
         <h4>💧 Points d'eau — <span id="wf-site-name"></span></h4>
-        <p class="wf-hint">Glissez un point/rectangle directement sur la carte pour le repositionner. Utilisez les boutons pour ajuster taille et rotation.</p>
+        <p class="wf-hint">Glissez un point/rectangle directement sur la carte pour le repositionner. Utilisez les boutons pour ajuster taille et rotation. Le nom de chaque point doit correspondre exactement à une ligne de la table Grist Batiments (Site = ce site) pour être coloré et listé comme un bâtiment.</p>
         <div id="wf-list"></div>
         <div id="wf-add-row">
           <select id="wf-add-type">
@@ -314,10 +315,10 @@
           </div>
           <div class="cumr">
             <input type="checkbox" id="cumchk" checked style="cursor:pointer;accent-color:#1a3a5c" onchange="APP.useCumul=this.checked;document.getElementById('cumsw').style.opacity=this.checked?'1':'0.3';refresh()">
-            <label for="cumchk" style="cursor:pointer">Cumul :</label>
+            <input type="text" id="cumname" value="Cumul" title="Nom affiché dans la légende" oninput="APP.cumulName=this.value||'Cumul';renderLegend()">
             <div class="cumv" id="cumsw" title="Couleur si plusieurs catégories sur un même bâtiment"><input type="color" id="cumc" value="#f39c12" oninput="APP.cumulColor=this.value;cumsw.style.background=this.value;refresh()"></div>
-            <span style="color:#777;font-size:10px">couleur si bât. dans plusieurs catégories</span>
           </div>
+          <div style="color:#777;font-size:10px;margin-top:2px">Nom et couleur utilisés si un bâtiment est dans plusieurs catégories à la fois (ex : raccordé aux deux réseaux)</div>
         </div>
       </div>
 
@@ -464,23 +465,27 @@
       </div>
       <div class="guide-section">
         <h3>💧 Points d'eau (forage, puits, fontaine, bassins)</h3>
+        <p><b>Forage</b>, <b>Puits</b>, <b>Fontaine</b>, <b>Bassin K/M</b> et <b>Bassin L</b> sont
+        des <b>bâtiments comme les autres</b> : ajoutez-les à votre table <code>Batiments</code>
+        (mêmes noms exacts, voir liste ci-dessus) pour les colorer et les gérer depuis la liste
+        "Bâtiments", au survol elles affichent leur nom et leur catégorie comme n'importe quel
+        bâtiment. Seule leur géométrie (cercle/rectangle) se règle différemment :</p>
         <ul>
           <li>Cliquez <b>💧 Points d'eau</b> pour passer en mode édition : chaque point/rectangle
           devient déplaçable directement sur la carte.</li>
           <li><b>Glissez</b> un point pour le repositionner. Utilisez les boutons <b>−/+</b> du
           panneau pour ajuster la taille (cercle) ou la largeur/hauteur/rotation (rectangle).</li>
-          <li>Renommez un point en modifiant son champ texte, ou supprimez-le avec 🗑.</li>
           <li>Ajoutez un nouveau point/rectangle en bas du panneau (choisissez le type, un nom, puis
-          <b>+ Ajouter</b>) — il apparaît au centre du plan, à glisser ensuite au bon endroit.</li>
+          <b>+ Ajouter</b>) — il apparaît au centre du plan, à glisser ensuite au bon endroit (pensez
+          à ajouter la ligne correspondante dans <code>Batiments</code>).</li>
           <li><b>💾 Enregistrer</b> mémorise les positions pour tous les utilisateurs du document
-          (comme le calage du plan). Décochez <b>💧 Points d'eau</b> dans la légende pour masquer
-          temporairement la couche sans rien supprimer.</li>
+          (comme le calage du plan).</li>
         </ul>
         <p style="margin-top:5px">Pour distinguer les bâtiments raccordés au forage vs. au réseau de
         ville, créez 2 catégories (ex : <code>Forage</code>, <code>Ville</code>) via la variante à
         3 tables ci-dessus — un bâtiment dans les <b>deux</b> catégories prend automatiquement la
-        couleur "Cumul" (réglable dans 🏷 Catégories), pratique pour les bâtiments raccordés aux
-        deux réseaux pour leurs sanitaires.</p>
+        couleur "Cumul" (nom et couleur personnalisables dans 🏷 Catégories), pratique pour les
+        bâtiments raccordés aux deux réseaux pour leurs sanitaires.</p>
       </div>
     </div>
     <div class="mft"><button class="btn-primary" onclick="closeModal('guide-modal')">Fermer</button></div>
@@ -573,7 +578,7 @@ function latLngToPx(lat,lng,site){
 }
 
 // ── État ──────────────────────────────────────────────────
-const APP={cumulColor:'#f39c12',useCumul:true,cats:[],buildings:{},dcRows:{},batRowId:{},showWater:true};
+const APP={cumulColor:'#f39c12',cumulName:'Cumul',useCumul:true,cats:[],buildings:{},dcRows:{},batRowId:{}};
 let currentSite=SITES[0];
 let buildingFilter='all';
 let editingCatId=null;
@@ -602,7 +607,7 @@ const BASE_LAYERS=[
 let activeBaseId='osm-standard';
 
 // ── Carte ─────────────────────────────────────────────────
-let map, baseLayer, buildingsLayer, lockedLayer, waterLayer;
+let map, baseLayer, buildingsLayer, lockedLayer;
 let calibMode=false, calibDrag=null;
 
 function initMap(){
@@ -610,7 +615,6 @@ function initMap(){
   baseLayer=L.tileLayer('', {maxZoom:20}).addTo(map);
   buildingsLayer=L.layerGroup().addTo(map);
   lockedLayer=L.layerGroup().addTo(map);
-  waterLayer=L.layerGroup().addTo(map);
   setBaseLayer(activeBaseId);
   map.on('mousedown', onMapMouseDown);
 }
@@ -669,39 +673,52 @@ function renderMap(){
   buildingsLayer.clearLayers();
   const shapes=(SITE_SHAPES[currentSite.key]||{}).b||{};
   for(const code of Object.keys(shapes)){
-    const b=APP.buildings[currentSite.key+'|'+code];
-    const vis=b?b.visible:true;
-    const c=buildingColor(currentSite.key,code);
-    const style={
-      color:'#444', weight:1.2,
-      fillColor: vis ? (c||'#c8d6e5') : '#999',
-      fillOpacity: vis ? (c?0.82:0.35) : 0.55,
-      opacity: vis?1:0.6,
-    };
-    for(const part of shapes[code]){
-      // part = [outerRing, ...holeRings] — Leaflet natively renders subsequent rings as holes
-      const latlngRings=part.map(ring=>ring.map(([px,py])=>pxToLatLng(px,py,currentSite)));
-      const poly=L.polygon(latlngRings, style);
-      poly.bindTooltip(`<b>${code}</b>`+(b?`<br><span style="font-size:10px;color:#666">${b.nomComplet||''}</span>`:''),{sticky:true,opacity:0.9});
-      poly.on({
-        mouseover(e){
-          e.target.setStyle({weight:2.4,color:'#111'});e.target.bringToFront();
-          const cats=b?APP.cats.filter(cc=>b.catIds.includes(cc._id)&&cc.active).map(cc=>cc.nom).join(', '):'';
-          const tip=document.getElementById('tip');
-          tip.innerHTML=`<b>${b?b.nomComplet:code}</b>`+(cats?`<br><span style="font-size:10px;color:#666">${cats}</span>`:'');
-          tip.classList.add('show');
-        },
-        mouseout(e){ poly.setStyle(style); document.getElementById('tip').classList.remove('show'); },
-      });
-      buildingsLayer.addLayer(poly);
-    }
+    drawMapItem(code, shapes[code], null);
+  }
+  const waterFeats=WF[currentSite.key]||[];
+  for(const f of waterFeats){
+    const ringPx = f.type==='rect' ? rectRingPx(f.x,f.y,f.w,f.h,f.rot) : circleRingPx(f.x,f.y,f.r);
+    drawMapItem(f.code, [[ringPx]], f);
   }
   renderLockedZones();
-  renderWaterFeatures();
   renderLegend();
 }
 
-// ── Points d'eau : géométrie + rendu ────────────────────────
+// Dessine un item "bâtiment" (forme réelle ou point d'eau) avec le même style/tooltip/couleur
+// que les bâtiments classiques — un point d'eau n'est coloré/nommé que s'il a une ligne
+// correspondante (même nom exact) dans la table Grist Batiments, comme n'importe quel bâtiment.
+function drawMapItem(code, parts, waterFeature){
+  const b=APP.buildings[currentSite.key+'|'+code];
+  const vis=b?b.visible:true;
+  const c=buildingColor(currentSite.key,code);
+  const style={
+    color:'#444', weight:1.2,
+    fillColor: vis ? (c||'#c8d6e5') : '#999',
+    fillOpacity: vis ? (c?0.82:0.35) : 0.55,
+    opacity: vis?1:0.6,
+  };
+  const title=b?b.bat:code;
+  const cats=b?APP.cats.filter(cc=>b.catIds.includes(cc._id)&&cc.active).map(cc=>cc.nom).join(', '):'';
+  for(const part of parts){
+    // part = [outerRing, ...holeRings] — Leaflet natively renders subsequent rings as holes
+    const latlngRings=part.map(ring=>ring.map(([px,py])=>pxToLatLng(px,py,currentSite)));
+    const poly=L.polygon(latlngRings, style);
+    poly.bindTooltip(`<b>${title}</b>`+(cats?`<br><span style="font-size:10px;color:#666">${cats}</span>`:''),{sticky:true,opacity:0.9});
+    poly.on({
+      mouseover(e){
+        e.target.setStyle({weight:2.4,color:'#111'});e.target.bringToFront();
+        const tip=document.getElementById('tip');
+        tip.innerHTML=`<b>${title}</b>`+(cats?`<br><span style="font-size:10px;color:#666">${cats}</span>`:'');
+        tip.classList.add('show');
+      },
+      mouseout(e){ poly.setStyle(style); document.getElementById('tip').classList.remove('show'); },
+    });
+    if(waterFeature)poly.on('mousedown', e=>startFeatureDrag(waterFeature,e));
+    buildingsLayer.addLayer(poly);
+  }
+}
+
+// ── Points d'eau : géométrie ─────────────────────────────────
 function circleRingPx(cx,cy,r,n){
   n=n||28;
   const pts=[];
@@ -718,22 +735,6 @@ function rectRingPx(cx,cy,w,h,rotDeg){
     cx+lx*Math.cos(rad)-ly*Math.sin(rad),
     cy+lx*Math.sin(rad)+ly*Math.cos(rad),
   ]);
-}
-function renderWaterFeatures(){
-  waterLayer.clearLayers();
-  if(!APP.showWater)return;
-  const feats=WF[currentSite.key]||[];
-  for(const f of feats){
-    const ringPx = f.type==='rect' ? rectRingPx(f.x,f.y,f.w,f.h,f.rot) : circleRingPx(f.x,f.y,f.r);
-    const ring = ringPx.map(([px,py])=>pxToLatLng(px,py,currentSite));
-    const style = f.type==='rect'
-      ? {color:'#0d3b5c', weight:1.5, fillColor:'#5dade2', fillOpacity:0.65}
-      : {color:'#083048', weight:1.5, fillColor:'#1a6fa5', fillOpacity:0.92};
-    const poly=L.polygon(ring, style);
-    poly.bindTooltip(f.label||'', {permanent:true, direction:'top', className:'wf-label', offset:[0,f.type==='rect'?-6:-10]});
-    poly.on('mousedown', e=>startFeatureDrag(f,e));
-    waterLayer.addLayer(poly);
-  }
 }
 
 // ── Zones verrouillées (non sélectionnables, ex: partie non possédée) ──
@@ -760,15 +761,7 @@ function renderLegend(){
   if(!active.length){el.innerHTML='<span style="color:#aaa;font-size:10px">Aucune catégorie active</span>';}
   else{
     for(const c of active){const co=col(c.couleur)||NAMED.bleu;el.innerHTML+=`<div class="lr"><div class="ld" style="background:${co}"></div>${c.nom}</div>`;}
-    if(active.length>1&&APP.useCumul)el.innerHTML+=`<div class="lr"><div class="ld" style="background:${APP.cumulColor};border-style:dashed"></div><i>Cumul</i></div>`;
-  }
-  const hasWater=(WF[currentSite.key]||[]).length>0;
-  if(hasWater){
-    el.innerHTML+=`<div class="lr" style="margin-top:5px;padding-top:5px;border-top:1px solid #eee">
-      <input type="checkbox" id="wf-vis-chk" ${APP.showWater?'checked':''} style="cursor:pointer;accent-color:#1a6fa5" onchange="APP.showWater=this.checked;renderMap()">
-      <label for="wf-vis-chk" style="cursor:pointer">💧 Points d'eau</label></div>
-      <div class="lr"><div class="ld" style="background:#1a6fa5;border-radius:50%"></div>Forage / puits / fontaine</div>
-      <div class="lr"><div class="ld" style="background:#5dade2"></div>Bassin</div>`;
+    if(active.length>1&&APP.useCumul)el.innerHTML+=`<div class="lr"><div class="ld" style="background:${APP.cumulColor};border-style:dashed"></div><i>${APP.cumulName}</i></div>`;
   }
 }
 
@@ -878,7 +871,7 @@ function renderWFList(){
     row.innerHTML=`
       <div class="wf-row-top">
         <span class="wf-ic">${iconFor(f.type)}</span>
-        <input type="text" value="${(f.label||'').replace(/"/g,'&quot;')}" onchange="renameWF('${f.id}',this.value)">
+        <input type="text" value="${(f.code||'').replace(/"/g,'&quot;')}" title="Doit correspondre exactement au nom de la ligne dans la table Grist Batiments" onchange="renameWF('${f.id}',this.value)">
         <button class="wf-del" title="Supprimer" onclick="deleteWaterFeature('${f.id}')">🗑</button>
       </div>
       <div class="wf-ctrls">${ctrls}</div>`;
@@ -886,7 +879,7 @@ function renderWFList(){
   }
 }
 function findWF(id){ return wfList().find(f=>f.id===id); }
-function renameWF(id,val){ const f=findWF(id); if(f){f.label=val;renderMap();} }
+function renameWF(id,val){ const f=findWF(id); if(f&&val.trim()){f.code=val.trim();renderMap();} }
 function stepWF(id,field,delta){
   const f=findWF(id); if(!f)return;
   if(field==='r')f.r=Math.max(4,f.r+delta);
@@ -903,9 +896,9 @@ function deleteWaterFeature(id){
 }
 function addWaterFeature(){
   const type=document.getElementById('wf-add-type').value;
-  const label=document.getElementById('wf-add-label').value.trim()||(type==='rect'?'Bassin':'Point d\'eau');
+  const code=document.getElementById('wf-add-label').value.trim()||(type==='rect'?'Bassin':'Point d\'eau');
   const panel=SITE_SHAPES[currentSite.key].panel;
-  const base={id:'wf-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), type, label, x:panel[0]/2, y:panel[1]/2};
+  const base={id:'wf-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), type, code, x:panel[0]/2, y:panel[1]/2};
   wfList().push(type==='rect' ? Object.assign(base,{w:80,h:40,rot:0}) : Object.assign(base,{r:22}));
   document.getElementById('wf-add-label').value='';
   renderWFList(); renderMap();
@@ -1047,7 +1040,8 @@ function renderBuildings(){
   const activeCats=APP.cats.filter(c=>c.active);
   wrap.innerHTML='';
   for(const b of list){
-    const hasShape=!!(SITE_SHAPES[currentSite.key]&&SITE_SHAPES[currentSite.key].b[b.code]);
+    const hasShape=!!(SITE_SHAPES[currentSite.key]&&SITE_SHAPES[currentSite.key].b[b.code])
+      || (WF[currentSite.key]||[]).some(f=>f.code===b.code);
     const row=document.createElement('div');
     row.className='dr'+(b.visible?'':' gray')+(hasShape?'':' nogeo');
     const dots=activeCats.map(cat=>{
