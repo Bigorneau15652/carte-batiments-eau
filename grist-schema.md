@@ -97,14 +97,14 @@ au lieu des départements. Les formes de chaque bâtiment ont été tracées à 
 | Saint-Charles | Saint-Charles 2 |
 | Saint-Louis | Saint-Louis |
 | Route de Mende | Forage |
-| Route de Mende | Puits |
+| Route de Mende | Puit |
 | Route de Mende | Fontaine |
-| Route de Mende | Bassin K/M |
+| Route de Mende | Bassin KM |
 | Route de Mende | Bassin L |
 
 </details>
 
-> Les 5 dernières lignes ci-dessus (`Forage`, `Puits`, `Fontaine`, `Bassin K/M`, `Bassin L`) sont
+> Les 5 dernières lignes ci-dessus (`Forage`, `Puit`, `Fontaine`, `Bassin KM`, `Bassin L`) sont
 > les **points d'eau** de cette variante (voir section "Points d'eau" plus bas) — ajoutez-les à
 > votre table `Batiments` exactement comme n'importe quel autre bâtiment (même `Site`, mêmes
 > colonnes `note`/`visible`) pour pouvoir les colorer et les gérer depuis la liste "Bâtiments".
@@ -279,7 +279,7 @@ Répétez l'opération pour chacun des 5 sites (le calage est indépendant par s
 
 Cette variante ajoute 5 éléments pour repérer les installations liées au réseau de forage :
 
-- 3 points (cercles) : **Forage**, **Puits**, **Fontaine**.
+- 3 points (cercles) : **Forage**, **Puit**, **Fontaine**.
 - 2 rectangles : les **bassins** devant les bâtiments **K/M** et **L**.
 
 **Ce sont des bâtiments comme les autres** : ils se colorent, se listent et se survolent (même
