@@ -11,8 +11,9 @@ const WATER_FEATURES_DEFAULT = {
   'Route de Mende': [
     {id:'forage',    type:'circle', code:'Forage',   x:2037, y:203,  r:22},
     {id:'puits',     type:'circle', code:'Puit',     x:1037, y:2057, r:22},
-    // Entre M et A, côté 123 (vérifié hors des polygones M/A/123).
-    {id:'fontaine',  type:'circle', code:'Fontaine', x:1367, y:1951, r:22},
+    // Au coin K/M/A (juste sous K, entre M et A), comme indiqué par l'utilisateur —
+    // équidistant des 3 bâtiments (~35-38px), vérifié hors de leurs polygones.
+    {id:'fontaine',  type:'circle', code:'Fontaine', x:1261.5, y:1741.9, r:22},
     {id:'bassin-l',  type:'rect',   code:'Bassin L', x:840,  y:1379, w:110, h:44,  rot:-27},
     // Accolé côté L, hors du polygone K∪M (vérifié par distance réelle, ~11px de marge),
     // parallèle à l'axe K→M (≈63°, donc rot ≈ 63-90).
