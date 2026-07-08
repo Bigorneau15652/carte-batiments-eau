@@ -124,6 +124,12 @@ au lieu des départements. Les formes de chaque bâtiment ont été tracées à 
   automatiquement par le widget (voir plus bas). Vous n'avez rien à ajouter dans Grist pour elles.
 - **Saint-Charles** retracé à partir de votre nouveau plan (zone verrouillée plus petite, forme
   affinée). Aucun changement de votre côté dans Grist.
+- **Correction Saint-Charles (dessin corrompu)** : `Saint-Charles 2` était stocké comme un seul
+  contour auto-croisant (créant un X visible avec `Saint-Charles 1`) — séparé en 2 parties
+  indépendantes, comme `Préfa 1-2-3`. La zone verrouillée hachurée était elle aussi un polygone
+  auto-sécant (traits rouges qui débordaient sur toute la carte) — remplacée par un contour simple
+  correspondant à la petite encoche voulue, accolée au coin sud de `Saint-Charles 1`. Aucun
+  changement de votre côté dans Grist.
 - **Correction interne** : plusieurs bâtiments avec une cour intérieure/fenêtre (`L`, `S`, `K`,
   `H`, `Bâtiment ATRIUM`) s'affichaient à tort comme des blocs pleins — leurs découpes internes
   s'affichent maintenant correctement. Aucun changement de votre côté dans Grist.
