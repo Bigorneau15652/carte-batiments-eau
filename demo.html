@@ -768,7 +768,7 @@ function renderLockedZones(){
   for(const zone of zones){
     for(const ring of zone.rings){
       const latlngs=ring.map(([px,py])=>pxToLatLng(px,py,currentSite));
-      const poly=L.polygon(latlngs,{color:'#c0392b',weight:1.5,fillColor:'#999',fillOpacity:0.55,dashArray:'4,3',interactive:true});
+      const poly=L.polygon(latlngs,{color:'#555555',weight:1.2,fillColor:'#999',fillOpacity:0.55,interactive:true});
       poly.bindTooltip(`🔒 ${zone.label}`,{sticky:true,opacity:0.9});
       poly.on('add', ()=>{ if(poly._path)poly._path.setAttribute('fill','url(#lockHatch)'); });
       lockedLayer.addLayer(poly);

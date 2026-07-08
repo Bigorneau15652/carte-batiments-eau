@@ -258,7 +258,7 @@ mémorisé (options du widget) pour tous les utilisateurs du document.
 
 ## Zones verrouillées (non sélectionnables)
 
-Ces zones sont affichées avec une **trame hachurée grise et un contour pointillé rouge**, en
+Ces zones sont affichées avec une **trame hachurée grise et un contour gris uni**, en
 permanence, quel que soit le mode d'affichage. Elles n'ont pas de ligne dans la table `Batiments`
 et ne réagissent pas au clic — elles servent uniquement de repère visuel :
 
