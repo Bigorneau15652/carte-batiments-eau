@@ -20,6 +20,7 @@ au lieu des départements. Les formes de chaque bâtiment ont été tracées à 
 | `note` (ou le nom que vous voulez) | Text | **Optionnel.** Nom de la catégorie active pour ce bâtiment (doit correspondre exactement au `nom` d'une ligne de la table `Categories`, ex : `Très bon`). Laisser vide = bâtiment non coloré. |
 | `visible` (ou le nom que vous voulez) | Bool | **Optionnel.** `true`/coché = couleur normale · `false`/décoché = bâtiment grisé. Laisser ce menu vide dans ⚙️ → tous les bâtiments sont toujours visibles. |
 | `nom_court` (ou le nom que vous voulez) | Text | **Optionnel.** Nom abrégé (ex : `Bât. A`) affiché dans la liste "Bâtiments" quand le panneau de droite est replié (voir "Panneau repliable" ci-dessous). Laissé vide dans ⚙️ → le widget raccourcit automatiquement le nom complet aux 5 premiers caractères si celui-ci dépasse 5 caractères. |
+| `sanitaires` (ou le nom que vous voulez) | Numeric | **Optionnel.** Nombre de sanitaires du bâtiment, affiché dans l'étiquette au survol après le type d'alimentation (ex : `Réseau d'eau - 4 sanitaires`). Laissé vide, à 0, ou colonne non configurée → rien n'est affiché après le type d'alimentation. |
 
 > Comme pour la table Catégories, les noms `note`/`visible` sont juste indicatifs : dans ⚙️, vous
 > choisissez la colonne exacte de **votre** table (ex : `Categories_energie`, `Active`…).
@@ -155,14 +156,16 @@ au lieu des départements. Les formes de chaque bâtiment ont été tracées à 
 
 **Exemple recommandé pour ce fork (réseau d'eau) :**
 ```
-Forage | marron | true
-Ville  | bleu   | true
+Forage        | marron | true
+Réseau d'eau  | bleu   | true
+Puit          | cyan   | true
 ```
 Utilisez la **variante à 3 tables** ci-dessous (`Batiment_categories`) plutôt que la colonne
-`note` : elle seule permet à un bâtiment de cumuler **les deux** catégories à la fois. Un
-bâtiment coché à la fois `Forage` et `Ville` (ex : sanitaires alimentés par les deux réseaux)
-prend automatiquement la **couleur "Cumul"** (réglable dans 🏷 Catégories → par défaut orange,
-choisissez une 3ᵉ couleur bien distincte de `marron` et `bleu`, ex : violet).
+`note` : elle seule permet à un bâtiment de cumuler **plusieurs** catégories à la fois (ex :
+`Forage` + `Puit` pour un bassin alimenté par les deux, ou `Forage` + `Réseau d'eau` pour des
+sanitaires raccordés aux deux réseaux). Un bâtiment coché dans 2 catégories ou plus prend
+automatiquement la **couleur "Cumul"** (nom et couleur réglables dans 🏷 Catégories → par défaut
+"Cumul"/orange, choisissez un nom et une couleur bien distincts des autres catégories).
 
 **Couleurs nommées disponibles :** bleu, rouge, vert, jaune, orange, violet, rose, marron, gris, noir, blanc, cyan, turquoise, emeraude, brique
 

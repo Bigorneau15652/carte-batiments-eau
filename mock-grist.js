@@ -11,7 +11,7 @@ window.grist = (function(){
   let optionsListeners = [];
   let recordListeners = [];
   let currentOptions = {
-    tableBat:'Batiments', colSite:'Site', colBat:'Bâtiment',
+    tableBat:'Batiments', colSite:'Site', colBat:'Bâtiment', colSanitaires:'sanitaires',
     tableCats:'Categories', tableDc:'Batiment_categories',
     colDept:'batiment', colCat:'categorie',
   };

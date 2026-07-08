@@ -373,6 +373,9 @@
           <label style="margin-top:8px">Colonne "Nom court" dans Bâtiments (optionnel)</label>
           <small>Nom abrégé affiché dans la liste "Bâtiments" quand le panneau est replié (ex : "Bât. A"). Laissé vide → le widget raccourcit automatiquement le nom complet aux 5 premiers caractères s'il est trop long.</small>
           <select id="cfg-col-court"></select>
+          <label style="margin-top:8px">Colonne "Nombre de sanitaires" dans Bâtiments (optionnel)</label>
+          <small>Nombre (colonne Numérique) affiché sous le nom au survol, ex : "Réseau d'eau - 4 sanitaires". Laissé vide ou 0 → rien n'est affiché.</small>
+          <select id="cfg-col-sanitaires"></select>
         </div>
         <div class="cfg-group">
           <label>Table des Catégories</label>
@@ -447,6 +450,9 @@
           <li>Cliquez la <b>pastille colorée</b> d'un bâtiment → ajoute/retire de la catégorie.</li>
           <li>Décochez ☑ à gauche → le bâtiment devient grisé sur la carte.</li>
           <li>🗺️ changez de fond de carte (OpenStreetMap, satellite Esri…) et réglez sa transparence en bas à gauche.</li>
+          <li>Survolez un bâtiment → étiquette avec son <b>nom complet en gras</b>, puis son <b>type
+          d'alimentation</b> (catégories actives, ex : <i>Forage et Puit</i>) et son <b>nombre de
+          sanitaires</b> si renseigné (ex : <i>Réseau d'eau - 4 sanitaires</i>).</li>
         </ul>
       </div>
       <div class="guide-section">
@@ -537,7 +543,7 @@ function shapeCode(site,bat){
 }
 
 // ── Config ────────────────────────────────────────────────
-let CFG={bat:'Batiments',cats:'Categories',dc:'Batiment_categories',colSite:'Site',colBat:'Bâtiment',colNote:'',colVisible:'',colCourt:'',colDept:'batiment',colCat:'categorie',colCatNom:'',colCatCouleur:'',colCatActive:''};
+let CFG={bat:'Batiments',cats:'Categories',dc:'Batiment_categories',colSite:'Site',colBat:'Bâtiment',colNote:'',colVisible:'',colCourt:'',colSanitaires:'',colDept:'batiment',colCat:'categorie',colCatNom:'',colCatCouleur:'',colCatActive:''};
 
 // ── Options widget : fusion défensive ─────────────────────
 // grist.setOptions() remplace tout l'objet d'options ; si chaque écran (config,
@@ -685,6 +691,23 @@ function renderMap(){
   renderLegend();
 }
 
+// Texte "type d'alimentation" (catégories actives, ex: "Forage et Ville") + "N sanitaires"
+// affiché sous le nom en gras dans l'étiquette — ex: "Réseau d'eau - 4 sanitaires".
+function catsJoined(b){
+  if(!b)return '';
+  const names=APP.cats.filter(cc=>b.catIds.includes(cc._id)&&cc.active).map(cc=>cc.nom);
+  if(!names.length)return '';
+  if(names.length===1)return names[0];
+  return names.slice(0,-1).join(', ')+' et '+names[names.length-1];
+}
+function infoLine(b){
+  const cats=catsJoined(b);
+  const n=b?Number(b.sanitaires):0;
+  const san=(n&&n>0)?`${n} sanitaire${n>1?'s':''}`:'';
+  if(cats&&san)return `${cats} - ${san}`;
+  return cats||san;
+}
+
 // Dessine un item "bâtiment" (forme réelle ou point d'eau) avec le même style/tooltip/couleur
 // que les bâtiments classiques — un point d'eau n'est coloré/nommé que s'il a une ligne
 // correspondante (même nom exact) dans la table Grist Batiments, comme n'importe quel bâtiment.
@@ -699,17 +722,17 @@ function drawMapItem(code, parts, waterFeature){
     opacity: vis?1:0.6,
   };
   const title=b?b.bat:code;
-  const cats=b?APP.cats.filter(cc=>b.catIds.includes(cc._id)&&cc.active).map(cc=>cc.nom).join(', '):'';
+  const info=infoLine(b);
   for(const part of parts){
     // part = [outerRing, ...holeRings] — Leaflet natively renders subsequent rings as holes
     const latlngRings=part.map(ring=>ring.map(([px,py])=>pxToLatLng(px,py,currentSite)));
     const poly=L.polygon(latlngRings, style);
-    poly.bindTooltip(`<b>${title}</b>`+(cats?`<br><span style="font-size:10px;color:#666">${cats}</span>`:''),{sticky:true,opacity:0.9});
+    poly.bindTooltip(`<b>${title}</b>`+(info?`<br><span style="font-size:10px;color:#666">${info}</span>`:''),{sticky:true,opacity:0.9});
     poly.on({
       mouseover(e){
         e.target.setStyle({weight:2.4,color:'#111'});e.target.bringToFront();
         const tip=document.getElementById('tip');
-        tip.innerHTML=`<b>${title}</b>`+(cats?`<br><span style="font-size:10px;color:#666">${cats}</span>`:'');
+        tip.innerHTML=`<b>${title}</b>`+(info?`<br><span style="font-size:10px;color:#666">${info}</span>`:'');
         tip.classList.add('show');
       },
       mouseout(e){ poly.setStyle(style); document.getElementById('tip').classList.remove('show'); },
@@ -1152,6 +1175,7 @@ async function onCfgBatChange(){
     makeOpts(document.getElementById('cfg-col-note'),cols,CFG.colNote);
     makeOpts(document.getElementById('cfg-col-visible'),cols,CFG.colVisible);
     makeOpts(document.getElementById('cfg-col-court'),cols,CFG.colCourt);
+    makeOpts(document.getElementById('cfg-col-sanitaires'),cols,CFG.colSanitaires);
     document.getElementById('cfg-bat-cols').style.display='block';
   }else document.getElementById('cfg-bat-cols').style.display='none';
 }
@@ -1179,7 +1203,7 @@ async function showConfig(){
     document.getElementById('cfg-bat').onchange=onCfgBatChange;
     makeOpts(document.getElementById('cfg-cats'),ALL_TABLES,CFG.cats);
     makeOpts(document.getElementById('cfg-dc'),ALL_TABLES,CFG.dc);
-    if(CFG.bat){await loadTableCols(CFG.bat);const cols=(TABLE_COLS[CFG.bat]||[]).map(c=>({id:c,label:c}));makeOpts(document.getElementById('cfg-col-site'),cols,CFG.colSite);makeOpts(document.getElementById('cfg-col-bat'),cols,CFG.colBat);makeOpts(document.getElementById('cfg-col-note'),cols,CFG.colNote);makeOpts(document.getElementById('cfg-col-visible'),cols,CFG.colVisible);makeOpts(document.getElementById('cfg-col-court'),cols,CFG.colCourt);document.getElementById('cfg-bat-cols').style.display='block';}
+    if(CFG.bat){await loadTableCols(CFG.bat);const cols=(TABLE_COLS[CFG.bat]||[]).map(c=>({id:c,label:c}));makeOpts(document.getElementById('cfg-col-site'),cols,CFG.colSite);makeOpts(document.getElementById('cfg-col-bat'),cols,CFG.colBat);makeOpts(document.getElementById('cfg-col-note'),cols,CFG.colNote);makeOpts(document.getElementById('cfg-col-visible'),cols,CFG.colVisible);makeOpts(document.getElementById('cfg-col-court'),cols,CFG.colCourt);makeOpts(document.getElementById('cfg-col-sanitaires'),cols,CFG.colSanitaires);document.getElementById('cfg-bat-cols').style.display='block';}
     if(CFG.cats){await loadTableCols(CFG.cats);const cols=(TABLE_COLS[CFG.cats]||[]).map(c=>({id:c,label:c}));makeOpts(document.getElementById('cfg-col-catnom'),cols,CFG.colCatNom);makeOpts(document.getElementById('cfg-col-catcouleur'),cols,CFG.colCatCouleur);makeOpts(document.getElementById('cfg-col-catactive'),cols,CFG.colCatActive);document.getElementById('cfg-cats-cols').style.display='block';}
     if(CFG.dc){await loadTableCols(CFG.dc);const cols=(TABLE_COLS[CFG.dc]||[]).map(c=>({id:c,label:c}));makeOpts(document.getElementById('cfg-col-dept'),cols,CFG.colDept);makeOpts(document.getElementById('cfg-col-cat'),cols,CFG.colCat);document.getElementById('cfg-cols').style.display='block';}
     document.getElementById('cfg-loading').style.display='none';
@@ -1198,6 +1222,7 @@ async function saveConfig(){
     colNote:document.getElementById('cfg-col-note').value||'',
     colVisible:document.getElementById('cfg-col-visible').value||'',
     colCourt:document.getElementById('cfg-col-court').value||'',
+    colSanitaires:document.getElementById('cfg-col-sanitaires').value||'',
     cats:document.getElementById('cfg-cats').value,
     colCatNom:document.getElementById('cfg-col-catnom').value||'',
     colCatCouleur:document.getElementById('cfg-col-catcouleur').value||'',
@@ -1210,7 +1235,7 @@ async function saveConfig(){
   if(!c.bat||!c.cats){msg.className='err';msg.style.display='block';msg.textContent='⚠️ Sélectionnez au minimum les tables Bâtiments et Catégories.';return;}
   Object.assign(CFG,c);
   try{
-    await patchOptions({tableBat:CFG.bat,colSite:CFG.colSite,colBat:CFG.colBat,colNote:CFG.colNote,colVisible:CFG.colVisible,colCourt:CFG.colCourt,
+    await patchOptions({tableBat:CFG.bat,colSite:CFG.colSite,colBat:CFG.colBat,colNote:CFG.colNote,colVisible:CFG.colVisible,colCourt:CFG.colCourt,colSanitaires:CFG.colSanitaires,
       tableCats:CFG.cats,colCatNom:CFG.colCatNom,colCatCouleur:CFG.colCatCouleur,colCatActive:CFG.colCatActive,
       tableDc:CFG.dc,colDept:CFG.colDept,colCat:CFG.colCat});
     msg.className='ok';msg.style.display='block';msg.textContent='✅ Configuration sauvegardée !';setTimeout(()=>{closeModal('cfg-modal');fetchAllTables();},700);
@@ -1225,6 +1250,7 @@ function loadConfig(opts){
   if(opts?.colNote!==undefined) CFG.colNote=opts.colNote;
   if(opts?.colVisible!==undefined) CFG.colVisible=opts.colVisible;
   if(opts?.colCourt!==undefined) CFG.colCourt=opts.colCourt;
+  if(opts?.colSanitaires!==undefined) CFG.colSanitaires=opts.colSanitaires;
   if(opts?.tableCats)CFG.cats=opts.tableCats;
   if(opts?.colCatNom!==undefined)     CFG.colCatNom=opts.colCatNom;
   if(opts?.colCatCouleur!==undefined) CFG.colCatCouleur=opts.colCatCouleur;
@@ -1310,6 +1336,7 @@ async function fetchAllTables(){
     const visibles=CFG.colVisible?batT[CFG.colVisible]:batT.visible;
     const notes=CFG.colNote?batT[CFG.colNote]:null;
     const courts=CFG.colCourt?batT[CFG.colCourt]:null;
+    const sanits=CFG.colSanitaires?batT[CFG.colSanitaires]:null;
     let unresolvedRef=false;
     if(sites.length&&typeof sites[0]==='number'){
       const resolved=await resolveRefText(CFG.bat,CFG.colSite,sites);
@@ -1337,8 +1364,9 @@ async function fetchAllTables(){
         else if(raw){const id=catByName[normName(raw)];if(id!=null)catIds=[id];}
       }
       const court=courts?String(courts[i]||'').trim():'';
+      const sanitaires=sanits?Number(sanits[i])||0:0;
       APP.buildings[key]={key, rowId:rowIds[i], site, bat, code, nomComplet:site+' — '+bat,
-        visible: visibles?visibles[i]!==false:true, catIds, court};
+        visible: visibles?visibles[i]!==false:true, catIds, court, sanitaires};
       APP.batRowId[rowIds[i]]=key;
     }
   }catch(e){
